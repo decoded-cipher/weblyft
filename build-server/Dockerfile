@@ -1,22 +1,20 @@
 FROM ubuntu:focal
 
-RUN apt-get update
-RUN apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
-RUN apt-get upgrade -y
-RUN apt-get install -y nodejs
-
-RUN apt-get install git -y
+# Install dependencies and Node.js in one layer
+RUN apt-get update && apt-get install -y curl git && \
+    curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/app
 
-COPY entrypoint.sh entrypoint.sh
-COPY server.js server.js
-COPY package*.json .
+COPY package*.json ./
+RUN npm install --only=production && rm -rf /root/.npm
 
-RUN npm install
+# Copy remaining files
+COPY entrypoint.sh server.js ./
 
-RUN chmod +x entrypoint.sh
-RUN chmod +x server.js
+# Ensure scripts are executable
+RUN chmod +x entrypoint.sh server.js
 
-ENTRYPOINT [ "/home/app/entrypoint.sh" ]
+ENTRYPOINT ["/home/app/entrypoint.sh"]
