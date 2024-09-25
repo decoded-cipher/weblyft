@@ -1,0 +1,22 @@
+{
+  "name": "build-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "Arjun Krishna",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.654.0",
+    "child_process": "^1.0.2",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1",
+    "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
