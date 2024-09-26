@@ -1,20 +1,21 @@
-FROM ubuntu:focal
+# Use a lightweight base image
+FROM node:20-alpine
 
-# Install dependencies and Node.js in one layer
-RUN apt-get update && apt-get install -y curl git && \
-    curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
+# Set working directory
 WORKDIR /home/app
 
+# Install curl and git, and install dependencies
 COPY package*.json ./
-RUN npm install --only=production && rm -rf /root/.npm
+RUN apk add --no-cache curl git && \
+    npm ci --only=production && \
+    npm cache clean --force
 
-# Copy remaining files
-COPY entrypoint.sh server.js ./
+# Copy remaining files explicitly
+COPY ./entrypoint.sh /home/app/entrypoint.sh
+COPY ./server.js /home/app/server.js
 
 # Ensure scripts are executable
-RUN chmod +x entrypoint.sh server.js
+RUN chmod +x /home/app/entrypoint.sh /home/app/server.js
 
-ENTRYPOINT ["/home/app/entrypoint.sh"]
+# Set the entrypoint
+CMD ["sh", "./entrypoint.sh"]
