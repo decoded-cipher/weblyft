@@ -1,16 +1,31 @@
 
 import dotenv from 'dotenv';
-import express, { Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
+import routes from './routes';
 
 dotenv.config();
+const app: Application = express();
 
-const app = express();
-const port = process.env.PORT;
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(routes);
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, world!');
+
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+	res.status(404).json({
+		status: 404,
+		message: 'Resource not found'
+	});
 });
 
-app.listen(port, () => {
-  console.log(`API Server is running on port ${port}`);
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+	res.status(500).json({
+		status: 500,
+		message: 'Internal server error'
+	});
+});
+
+app.listen(process.env.PORT, () => {
+	console.log(`\n--- API Server started on port ${process.env.PORT}`)
 });
