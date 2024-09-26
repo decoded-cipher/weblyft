@@ -1,18 +1,25 @@
 {
   "name": "api-server",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
   "author": "Arjun Krishna",
   "license": "MIT",
   "description": "",
   "dependencies": {
+    "dotenv": "^16.4.5",
     "express": "^4.21.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "@types/express": "^4.17.0",
+    "@types/node": "^20.0.0",
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.0.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.0"
   }
 }

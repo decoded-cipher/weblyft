@@ -1,10 +1,11 @@
 {
   "name": "reverse-proxy",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
   "author": "Arjun Krishna",
   "license": "MIT",
@@ -15,6 +16,12 @@
     "http-proxy": "^1.18.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "@types/express": "^5.0.0",
+    "@types/http-proxy": "^1.17.15",
+    "@types/node": "^22.7.2",
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.2"
   }
 }
