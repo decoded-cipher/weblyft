@@ -9,17 +9,18 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy remaining files explicitly
-COPY ./entrypoint.sh /home/app/entrypoint.sh
-COPY ./server.js /home/app/server.js
+COPY ./entrypoint.sh ./server.js /home/app/
 
 # Ensure scripts are executable
 RUN chmod +x /home/app/entrypoint.sh /home/app/server.js
+
+
 
 # Stage 2: Runtime Stage
 FROM alpine:latest
 
 # Install necessary packages
-RUN apk add --no-cache curl git nodejs npm
+RUN apk add --no-cache git nodejs npm
 
 # Set working directory
 WORKDIR /home/app
