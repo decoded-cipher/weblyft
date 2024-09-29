@@ -28,8 +28,9 @@ app.use((req: Request, res: Response) => {
 
 // Modify proxy request path if needed
 proxy.on('proxyReq', (proxyReq: ClientRequest, req: IncomingMessage) => {
-    if (req.url === '/') {
-        proxyReq.path += 'index.html';
+    const target = resolveTarget(req.headers.host);
+    if (!req.url?.includes('.')) {
+        proxyReq.path = `${target}/index.html`;
     }
 });
 
