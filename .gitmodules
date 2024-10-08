@@ -1,0 +1,6 @@
+[submodule "sample-projects/sample-react-app"]
+	path = sample-projects/sample-react-app
+	url = https://github.com/decoded-cipher/sample-react-project.git
+[submodule "sample-projects/sample-vue-app"]
+	path = sample-projects/sample-vue-app
+	url = https://github.com/decoded-cipher/sample-vue-project.git
