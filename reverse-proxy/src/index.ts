@@ -28,14 +28,19 @@ app.use((req: Request, res: Response) => {
 
 // Modify proxy request path if needed
 proxy.on('proxyReq', (proxyReq: ClientRequest, req: IncomingMessage) => {
-    const target = resolveTarget(req.headers.host);
-    if (!req.url?.includes('.')) {
-        proxyReq.path = `${target}/index.html`;
+    const host = req.headers.host;
+    if (host) {
+        const target = resolveTarget(host);
+        if (!req.url?.includes('.')) {
+            proxyReq.path = `${target}/index.html`;
+        }
+    } else {
+        console.error('Host header is missing');
     }
 });
 
 // Start the server
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 app.listen(port, () => {
-    console.log(`Reverse Proxy listening on port ${port}`);
+    console.log(`--- Reverse Proxy listening on port ${port}`);
 });

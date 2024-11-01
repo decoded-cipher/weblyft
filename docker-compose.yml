@@ -1,0 +1,49 @@
+
+version: '3.8'
+services:
+
+  api-server:
+    build: ./api-server
+    container_name: api-server
+    ports:
+      - 5000:5000
+    volumes:
+      - .:/app/api-server
+    networks:
+      - weblyft
+    environment:
+      - PORT=5000
+      - DATABASE_URL=postgresql://xxxxx:xxxxx/weblyft?sslmode=require
+      - BUILDER_SERVICE_URL=http://localhost:9000
+
+
+  # docker-mgr:
+  #   build: ./docker-mgr
+  #   container_name: docker-mgr
+  #   ports:
+  #     - 9000:9000
+  #   volumes:
+  #     - .:/app/docker-mgr
+  #   networks:
+  #     - weblyft
+
+  reverse-proxy:
+    build: ./reverse-proxy
+    container_name: reverse-proxy
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/app/reverse-proxy
+    networks:
+      - weblyft
+    environment:
+      - PORT=8080
+      - BASE_PATH=https://pub-xxxxx.r2.dev/xxxxx
+
+
+networks:
+  weblyft:
+    driver: bridge
+
+volumes:
+  public:

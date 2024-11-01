@@ -14,7 +14,7 @@ router.use('/health', Health);
 router.get('/', (req: Request, res: Response) => {
     res.json({
         status: 200,
-        message: 'API is working properly'
+        message: 'Docker Service is working properly'
     });
 });
 
