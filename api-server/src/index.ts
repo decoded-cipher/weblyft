@@ -27,5 +27,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 app.listen(process.env.PORT, () => {
-	console.log(`\n--- API Server started on port ${process.env.PORT}`)
+	console.log(`--- API Server started on port ${process.env.PORT}`)
 });

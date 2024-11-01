@@ -11,8 +11,15 @@ async function pullDockerImage(image: string): Promise<void> {
                 return reject(err);
             }
 
-            const onFinished = (err: Error) => { err ? reject(err) : resolve(); }
             const onProgress = (event: any) => { console.log(event); }
+            
+            const onFinished = (error: Error | null, result: any[]): void => {
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                console.log(result);
+            }
             
             docker.modem.followProgress(stream, onFinished, onProgress);
         });

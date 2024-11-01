@@ -16,5 +16,5 @@ app.use('/service/v1', Routes);
 
 
 app.listen(process.env.PORT, () => {
-  console.log(`\n--- Docker Manager started on port ${process.env.PORT}`);
+  console.log(`--- Docker Manager started on port ${process.env.PORT}`);
 });

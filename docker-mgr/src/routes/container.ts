@@ -44,12 +44,23 @@ router.get('/', (req: Request, res: Response) => {
 
 // API route to run a Docker container
 router.post('/', (req: Request<{}, {}, RunContainerRequest>, res: Response) => {
+    
     const { gitUrl, projectName, cmd, envVars } = req.body;
+    const webserviceImage = process.env.WEBSERVICE_IMAGE;
+
+    if(!webserviceImage) {
+        res.status(500).json({
+            status: 500,
+            error: 'Webservice image not found',
+            details: 'Please set WEBSERVICE_IMAGE in .env file'
+        });
+        return;
+    }
   
-    pullDockerImage(process.env.WEBSERVICE_IMAGE).then(() => {
+    pullDockerImage(webserviceImage).then(() => {
 
         const containerOptions: ContainerCreateOptions = {
-            Image: process.env.WEBSERVICE_IMAGE,
+            Image: webserviceImage,
             name: projectName,
             Cmd: cmd,
             Env: [
