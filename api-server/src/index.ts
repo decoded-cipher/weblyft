@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import routes from './routes';
 
+const { connectRabbitMQ } = require('./config/queue');
+connectRabbitMQ();
+
 dotenv.config();
 const app: Application = express();
 

@@ -1,8 +1,9 @@
 
 import { Router, Request, Response } from 'express';
-import axios from 'axios';
-import { db } from '../../config/db';
 const router = Router();
+
+import { db } from '../../config/db';
+import { sendToQueue } from '../../config/queue';
 
 
 interface RunContainerRequest {
@@ -68,41 +69,44 @@ router.get('/', (req: Request, res: Response) => {
  * 
  * @example /api/v1/projects
  **/
+
 router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response) => {
 
     const { gitUrl, projectName, cmd, envVars } = req.body;
     const slug = projectName.toLowerCase().replace(/\s+/g, '-');
 
-    try {
-        const [apiResponse, project] = await Promise.all([
-            axios.post(`${process.env.BUILDER_SERVICE_URL}/service/v1/container`, {
-                gitUrl,
-                projectName: slug,
-                cmd,
-                envVars
-            }),
-            db.project.create({
-                data: {
-                    name: projectName,
-                    slug: slug,
-                    gitUrl: gitUrl
-                }
-            })
-        ]);
-
-        res.json({
-            status: 200,
-            message: 'Project created successfully',
-            data: apiResponse.data,
-            project
+    db.project.create({
+        data: {
+            name: projectName,
+            slug: slug,
+            gitUrl: gitUrl
+        }
+    }).then(async (project) => {
+        
+        await sendToQueue('build_queue', {
+            gitUrl,
+            projectName: slug,
+            cmd,
+            envVars
+        }).then(() => {
+            res.status(200).json({
+                message: 'Project build added to queue',
+                data: project
+            });
+        }).catch((error) => {
+            res.status(400).json({
+                error: 'Failed to add project build to queue',
+                details: error
+            });
         });
-    } catch (error) {
-        res.json({
-            status: 400,
+
+    }).catch((error) => {
+        res.status(400).json({
             error: 'Failed to create project',
             details: error
         });
-    }
+    });
+
 });
 
 

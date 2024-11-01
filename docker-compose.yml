@@ -2,45 +2,68 @@
 version: '3.8'
 services:
 
-  api-server:
-    build: ./api-server
-    container_name: api-server
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
     ports:
-      - 5000:5000
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
     volumes:
-      - .:/app/api-server
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - weblyft
-    env_file:
-      - ./api-server/.env
 
-  docker-mgr:
-    build: ./docker-mgr
-    container_name: docker-mgr
-    ports:
-      - 9000:9000
-    volumes:
-      - .:/app/docker-mgr
-    networks:
-      - weblyft
-    env_file:
-      - ./docker-mgr/.env
+  # api-server:
+  #   build: ./api-server
+  #   container_name: api-server
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   ports:
+  #     - 5000:5000
+  #   volumes:
+  #     - .:/app/api-server
+  #   networks:
+  #     - weblyft
+  #   env_file:
+  #     - ./api-server/.env
 
-  reverse-proxy:
-    build: ./reverse-proxy
-    container_name: reverse-proxy
-    ports:
-      - 8080:8080
-    volumes:
-      - .:/app/reverse-proxy
-    networks:
-      - weblyft
-    env_file:
-      - ./reverse-proxy/.env
+  # docker-mgr:
+  #   build: ./docker-mgr
+  #   container_name: docker-mgr
+  #   ports:
+  #     - 9000:9000
+  #   volumes:
+  #     - .:/app/docker-mgr
+  #   networks:
+  #     - weblyft
+  #   env_file:
+  #     - ./docker-mgr/.env
+
+  # reverse-proxy:
+  #   build: ./reverse-proxy
+  #   container_name: reverse-proxy
+  #   ports:
+  #     - 8080:8080
+  #   volumes:
+  #     - .:/app/reverse-proxy
+  #   networks:
+  #     - weblyft
+  #   env_file:
+  #     - ./reverse-proxy/.env
 
 networks:
   weblyft:
     driver: bridge
 
 volumes:
-  public:
+  # public:
+  rabbitmq-data:
