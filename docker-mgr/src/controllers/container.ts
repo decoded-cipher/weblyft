@@ -11,14 +11,15 @@ async function pullDockerImage(image: string): Promise<void> {
                 return reject(err);
             }
 
+            // The stream is a ReadableStream
             const onProgress = (event: any) => { console.log(event); }
             
-            const onFinished = (error: Error | null, result: any[]): void => {
+            const onFinished = (error: Error | null, result: any[]) => {
                 if (error) {
-                    console.error(error);
-                    return;
+                    reject(error);
+                } else {
+                    resolve();
                 }
-                console.log(result);
             }
             
             docker.modem.followProgress(stream, onFinished, onProgress);
