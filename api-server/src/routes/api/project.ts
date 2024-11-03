@@ -84,6 +84,7 @@ router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response
     }).then(async (project) => {
         
         await sendToQueue('build_queue', {
+            projectId: project.id,
             gitUrl,
             projectName: slug,
             cmd,
@@ -107,6 +108,52 @@ router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response
         });
     });
 
+});
+
+
+
+/**
+ * @route   PATCH /api/v1/projects/:id
+ * @desc    Update project details
+ * @access  Private
+ * @params  id, status
+ * @return  message, data
+ * @error   400, { error }
+ * @status  200, 400
+ * 
+ * @example 
+ **/
+
+router.patch('/:id', async (req: Request, res: Response) => {
+
+    const statusList = {
+        pending: 0,
+        running: 1,
+        success: 2,
+        failed: 3
+    }
+    
+    const { id } = req.params;
+    const { status } = req.body;
+
+    await db.project.update({
+        where: {
+            id: id
+        },
+        data: {
+            status: statusList[status]
+        }
+    }).then((project) => {
+        res.status(200).json({
+            message: 'Project updated successfully',
+            data: project
+        });
+    }).catch((error) => {
+        res.status(400).json({
+            error: 'Failed to update project',
+            details: error
+        });
+    });
 });
 
 
