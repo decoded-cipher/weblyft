@@ -90,7 +90,7 @@ async function executeBuild(outDirPath) {
 
         p.on('close', async (code) => {
             if (code === 0) {
-                await publishLog('Build process completed successfully');
+                await publishLog('Build process completed successfully...');
                 resolve();
             } else {
                 await publishLog(`error: Build process exited with code ${code}`);
@@ -131,7 +131,7 @@ async function uploadDistFolder(distFolderPath) {
     });
 
     await Promise.all(uploadPromises);
-    await publishLog('Upload of dist folder completed successfully');
+    await publishLog('Upload of dist folder completed successfully...');
 }
 
 
@@ -139,7 +139,9 @@ async function uploadDistFolder(distFolderPath) {
 // Initialize the build process and upload the dist folder
 (async () => {
     try {
+
         await producer.connect();
+        await publishLog('Build process started...');
 
         const outDirPath = path.join(__dirname, 'output');
         await executeBuild(outDirPath);
@@ -148,7 +150,7 @@ async function uploadDistFolder(distFolderPath) {
         await uploadDistFolder(distFolderPath);
 
     } catch (error) {
-        await publishLog('Error during build process', error);
+        await publishLog('Error during build process...', error);
     } finally {
         await producer.disconnect();
         process.exit(0);
