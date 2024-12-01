@@ -121,10 +121,13 @@ router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response
         }
     }).then(async (project) => {
 
-        await triggerDeploy(project).then(() => {
+        await triggerDeploy(project).then((deployment) => {
             res.status(200).json({
                 message: 'Project created & deployment added to queue successfully',
-                data: project
+                data: {
+                    project_id: project.id,
+                    deployment_id: deployment.id
+                }
             });
         }).catch((error) => {
             res.status(400).json({

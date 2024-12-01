@@ -21,17 +21,24 @@ import { triggerDeploy } from '../../controller/deploy';
  **/
 
 router.post('/', async (req: Request, res: Response) => {
-
+    
     const { project_id } = req.body;
-
+    
     db.Project.findUnique({ where: { id: project_id } }).then(async (project) => {
+        
+        const { id, gitUrl, cmd, envVars } = project;
 
-        await triggerDeploy(project).then(() => {
+        await triggerDeploy({
+            id: id,
+            gitUrl: gitUrl,
+            cmd: cmd,
+            envVars: envVars
+        }).then((deployment) => {
             res.status(200).json({
                 message: 'Project deployment added to queue',
                 data: {
-                    project: project,
-                    deployment: deployment
+                    project_id: project.id,
+                    deployment_id: deployment.id
                 }
             });
         }).catch((error) => {

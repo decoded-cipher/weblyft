@@ -3,7 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { Kafka } from 'kafkajs';
-// import { clickhouseClient } from './clickhouse';
 import { createClient } from '@clickhouse/client';
 
 

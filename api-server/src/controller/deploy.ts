@@ -1,21 +1,21 @@
 
-import e from 'express';
 import { db } from '../config/neon';
 import { sendToQueue } from '../config/rabbitmq';
 
+
+
 interface RunContainerRequest {
-    projectId: string;
-    deploymentId: string;
+    id: string;
     gitUrl: string;
-    projectName: string;
     cmd?: string[];
     envVars?: string[];
 }
 
 
+
 module.exports = {
 
-    triggerDeploy: (project) => {
+    triggerDeploy: async (project: RunContainerRequest) => {
         return new Promise((resolve, reject) => {
             
             db.Deployment.create({
@@ -24,16 +24,12 @@ module.exports = {
                 }
             }).then(async (deployment) => {
 
-                const queueData: RunContainerRequest = {
+                await sendToQueue('build_queue', {
                     projectId: project.id,
                     deploymentId: deployment.id,
                     gitUrl: project.gitUrl,
                     cmd: project.cmd,
                     envVars: project.envVars
-                };
-    
-                await sendToQueue('build_queue', {
-                    ...queueData
                 }).then(() => {
 
                     db.Project.update({
