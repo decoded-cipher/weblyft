@@ -1,11 +1,11 @@
 {
   "name": "docker-mgr",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "queue.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "start": "node dist/queue.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/queue.ts"
   },
   "author": "Arjun Krishna",
   "license": "MIT",
@@ -14,14 +14,12 @@
     "amqplib": "^0.10.4",
     "body-parser": "^1.20.3",
     "dockerode": "^4.0.2",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0"
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.5",
     "@types/body-parser": "^1.19.5",
     "@types/dockerode": "^3.3.31",
-    "@types/express": "^5.0.0",
     "@types/node": "^22.7.3",
     "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",

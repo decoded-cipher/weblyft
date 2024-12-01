@@ -1,5 +1,11 @@
+
+import dotenv from 'dotenv';
+dotenv.config();
+
 import * as amqp from 'amqplib';
-import { createRunContainer } from '../helpers/container';
+import { createRunContainer } from './container';
+
+
 
 interface Queues {
     [key: string]: string;
@@ -50,6 +56,8 @@ async function initializeQueue(channel: amqp.Channel): Promise<void> {
     }
 }
 
+
+
 // Consume messages from the queue
 async function consumeQueue(channel: amqp.Channel, queues: Queues): Promise<void> {
     if (!channel) {
@@ -66,6 +74,7 @@ async function consumeQueue(channel: amqp.Channel, queues: Queues): Promise<void
 
             try {
                 const content = JSON.parse(msg.content.toString());
+                console.log('--- Received message:', content);
                 await createRunContainer(content);
                 channel.ack(msg);
             } catch (error) {
@@ -79,4 +88,6 @@ async function consumeQueue(channel: amqp.Channel, queues: Queues): Promise<void
     }
 }
 
-export { connectRabbitMQ };
+(async () => {
+    await connectRabbitMQ();
+})();

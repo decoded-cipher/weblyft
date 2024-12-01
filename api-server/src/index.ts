@@ -11,8 +11,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(routes);
 
-const { connectRabbitMQ } = require('./config/queue');
+const { connectRabbitMQ } = require('./config/rabbitmq');
 connectRabbitMQ();
+
+const { initKafkaConsumer } = require('./config/kafka-clickhouse');
+initKafkaConsumer();
 
 
 app.use((req: Request, res: Response, next: NextFunction) => {

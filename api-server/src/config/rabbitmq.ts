@@ -1,7 +1,7 @@
 
 import * as amqp from 'amqplib';
 
-const queues = {
+const queues: { [key: string]: string } = {
     build_queue: 'build_queue',
 };
 
@@ -32,7 +32,7 @@ async function connectRabbitMQ(): Promise<void> {
 
 // Initialize the queues
 async function initializeQueue(channel: amqp.Channel): Promise<void> {
-    Object.keys(queues).forEach(async (queue) => {
+    Object.keys(queues).forEach(async (queue: string) => {
         await channel.assertQueue(queues[queue], { durable: true });
     });
     console.log('--- Queues initialized');
@@ -40,7 +40,7 @@ async function initializeQueue(channel: amqp.Channel): Promise<void> {
 
 
 // Send message to the queue
-async function sendToQueue(queue: string, message: any): Promise<void> {
+export async function sendToQueue(queue: string, message: any): Promise<void> {
     if (channel) {
         await channel.sendToQueue(queues[queue], Buffer.from(JSON.stringify(message)), { persistent: true });
     } else {

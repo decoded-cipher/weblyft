@@ -1,9 +1,9 @@
 
 import { Router, Request, Response } from 'express';
 const router = Router();
-
-import { db } from '../../config/db';
-import { sendToQueue } from '../../config/queue';
+import { generateSlug } from "random-word-slugs";
+import { db } from '../../config/neon';
+import { triggerDeploy } from '../../controller/deploy';
 
 
 interface RunContainerRequest {
@@ -16,7 +16,7 @@ interface RunContainerRequest {
 
 
 /**
- * @route   GET /api/v1/projects
+ * @route   GET /api/v1/project
  * @desc    Get all projects with pagination
  * @access  Private
  * @params  page, limit, search
@@ -24,7 +24,7 @@ interface RunContainerRequest {
  * @error   400, { error }
  * @status  200, 400
  * 
- * @example /api/v1/projects?page=1&limit=10&search=project
+ * @example /api/v1/project?page=1&limit=10&search=project
  **/
 
 router.get('/', (req: Request, res: Response) => {
@@ -59,7 +59,45 @@ router.get('/', (req: Request, res: Response) => {
 
 
 /**
- * @route   POST /api/v1/projects
+ * @route   GET /api/v1/projects/check/:name
+ * @desc    Check the availability of a project name. If not available, return a suggestion
+ * @access  Private
+ * @params  name
+ * @return  message, data
+ * @error   400, { error }
+ * @status  200, 400
+ * 
+ * @example /api/v1/projects/check/my-project
+ **/
+
+router.get('/check', (req: Request, res: Response) => {
+    const { name } = req.body;
+
+    db.Project.findFirst({
+        where: {
+            name: name
+        }
+    }).then((project) => {
+        const name = generateSlug();
+
+        if (project) {
+            res.status(200).json({
+                message: 'Project name not available',
+                data: name
+            });
+        } else {
+            res.status(200).json({
+                message: 'Project name available',
+                data: name
+            });
+        }
+    });
+});
+
+
+
+/**
+ * @route   POST /api/v1/project
  * @desc    Create a new project
  * @access  Private
  * @params  service, gitUrl, projectName, cmd, envVars
@@ -67,7 +105,7 @@ router.get('/', (req: Request, res: Response) => {
  * @error   400, { error }
  * @status  200, 400
  * 
- * @example /api/v1/projects
+ * @example /api/v1/project
  **/
 
 router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response) => {
@@ -75,28 +113,22 @@ router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response
     const { gitUrl, projectName, cmd, envVars } = req.body;
     const slug = projectName.toLowerCase().replace(/\s+/g, '-');
 
-    db.project.create({
+    db.Project.create({
         data: {
             name: projectName,
             slug: slug,
             gitUrl: gitUrl
         }
     }).then(async (project) => {
-        
-        await sendToQueue('build_queue', {
-            projectId: project.id,
-            gitUrl,
-            projectName: slug,
-            cmd,
-            envVars
-        }).then(() => {
+
+        await triggerDeploy(project).then(() => {
             res.status(200).json({
-                message: 'Project build added to queue',
+                message: 'Project created & deployment added to queue successfully',
                 data: project
             });
         }).catch((error) => {
             res.status(400).json({
-                error: 'Failed to add project build to queue',
+                error: 'Project created but failed to add deployment to queue',
                 details: error
             });
         });
@@ -110,51 +142,6 @@ router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response
 
 });
 
-
-
-/**
- * @route   PATCH /api/v1/projects/:id
- * @desc    Update project details
- * @access  Private
- * @params  id, status
- * @return  message, data
- * @error   400, { error }
- * @status  200, 400
- * 
- * @example 
- **/
-
-router.patch('/:id', async (req: Request, res: Response) => {
-
-    const statusList = {
-        pending: 0,
-        running: 1,
-        success: 2,
-        failed: 3
-    }
-    
-    const { id } = req.params;
-    const { status } = req.body;
-
-    await db.project.update({
-        where: {
-            id: id
-        },
-        data: {
-            status: statusList[status]
-        }
-    }).then((project) => {
-        res.status(200).json({
-            message: 'Project updated successfully',
-            data: project
-        });
-    }).catch((error) => {
-        res.status(400).json({
-            error: 'Failed to update project',
-            details: error
-        });
-    });
-});
 
 
 export default router;

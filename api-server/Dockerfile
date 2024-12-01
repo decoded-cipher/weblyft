@@ -11,8 +11,10 @@ RUN npm ci --only=production && \
 
 COPY . .
 
-RUN npx prisma generate && \
-    npm run build
+# RUN npx prisma generate && \
+#     npm run build
+
+RUN npm run build
 
 
 # Stage 2: Production

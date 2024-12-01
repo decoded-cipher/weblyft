@@ -6,46 +6,101 @@ const path = require('path');
 const mime = require('mime-types');
 const { exec } = require('child_process');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { Kafka } = require('kafkajs');
+
+
 
 // Initialize S3 client
 const s3Client = new S3Client({
     region: 'auto',
     endpoint: process.env.CLOUDFLARE_R2_ENDPOINT,
     credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY
+        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY,
+        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_KEY
     }
 });
 
-// Function to publish logs
-function publishLog(log) {
-    console.log(`logs:${process.env.PROJECT_ID}`, JSON.stringify({ log }));
+
+
+// Initialize Kafka client
+const kafka = new Kafka({
+    clientId: `build-server-${process.env.DEPLOYMENT_ID}`,
+    brokers: [process.env.KAFKA_BROKERS],
+    ssl: {
+        rejectUnauthorized: true,
+        ca: fs.readFileSync(path.join(__dirname, 'kafka.pem'), 'utf-8'),
+    },
+    sasl: {
+        mechanism: 'plain',
+        username: process.env.KAFKA_USERNAME,
+        password: process.env.KAFKA_PASSWORD
+    },
+    connectionTimeout: 30000,   // 30 seconds
+    requestTimeout: 30000,      // 30 seconds
+});
+
+// Initialize Kafka producer
+const producer = kafka.producer();
+
+
+
+// Function to publish logs to Kafka
+async function publishLog(log, retries = 3) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            await producer.send({
+                topic: process.env.KAFKA_TOPIC,
+                messages: [{
+                    key: 'log',
+                    value: JSON.stringify({
+                        project_id: process.env.PROJECT_ID,
+                        deployment_id: process.env.DEPLOYMENT_ID,
+                        log: log
+                    })
+                }]
+            });
+            return; // Exit the function if successful
+        } catch (error) {
+            if (attempt === retries) {
+                console.error('Failed to publish log after multiple attempts:', error);
+                throw error;
+            }
+            console.warn(`Attempt ${attempt} failed, retrying...`);
+            await new Promise(res => setTimeout(res, 1000 * attempt)); // Exponential backoff
+        }
+    }
 }
+
+
 
 // Function to execute build process
 async function executeBuild(outDirPath) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+
+        await publishLog('Installing dependencies and building the project...');
         const p = exec(`cd ${outDirPath} && npm install && npm run build`);
 
-        p.stdout.on('data', (data) => {
-            console.log(data.toString());
-            publishLog(data.toString());
+        p.stdout.on('data', async (data) => {
+            await publishLog(data.toString());
         });
 
-        p.stderr.on('data', (data) => {
-            console.error('Error', data.toString());
-            publishLog(`error: ${data.toString()}`);
+        p.stderr.on('data', async (data) => {
+            await publishLog(`error: ${data.toString()}`);
         });
 
-        p.on('close', (code) => {
+        p.on('close', async (code) => {
             if (code === 0) {
+                await publishLog('Build process completed successfully');
                 resolve();
             } else {
+                await publishLog(`error: Build process exited with code ${code}`);
                 reject(new Error(`Build process exited with code ${code}`));
             }
         });
     });
 }
+
+
 
 // Function to upload a single file to S3
 async function uploadFile(filePath, key) {
@@ -56,48 +111,46 @@ async function uploadFile(filePath, key) {
         ContentType: mime.lookup(filePath) || 'application/octet-stream'
     });
 
+    await publishLog(`Uploading file: ${key}`);
     await s3Client.send(command);
-    publishLog(`uploaded ${key}`);
-    console.log('uploaded', filePath);
 }
+
+
 
 // Function to upload all files in the dist folder to Cloudflare R2
 async function uploadDistFolder(distFolderPath) {
+    await publishLog('Starting upload of dist folder...');
     const distFolderContents = fs.readdirSync(distFolderPath, { recursive: true });
 
-    for (const file of distFolderContents) {
+    const uploadPromises = distFolderContents.map(async (file) => {
         const filePath = path.join(distFolderPath, file);
-        if (fs.lstatSync(filePath).isDirectory()) continue;
+        if (fs.lstatSync(filePath).isDirectory()) return;
 
-        const key = `__outputs/${process.env.PROJECT_ID}/${file}`;
-        console.log('uploading', filePath);
-        publishLog(`uploading ${file}`);
+        const key = `__outputs/${process.env.PROJECT_ID}/${process.env.DEPLOYMENT_ID}/${file}`;
         await uploadFile(filePath, key);
-    }
+    });
+
+    await Promise.all(uploadPromises);
+    await publishLog('Upload of dist folder completed successfully');
 }
 
-// Initialize the build and upload process
-async function init() {
-    try {
-        console.log('Executing script.js');
-        publishLog('Build Started...');
-        const outDirPath = path.join(__dirname, 'output');
 
+
+// Initialize the build process and upload the dist folder
+(async () => {
+    try {
+        await producer.connect();
+
+        const outDirPath = path.join(__dirname, 'output');
         await executeBuild(outDirPath);
 
-        console.log('Build Complete');
-        publishLog('Build Complete');
-
         const distFolderPath = path.join(__dirname, 'output', 'dist');
-        publishLog('Starting to upload');
         await uploadDistFolder(distFolderPath);
 
-        publishLog('Done');
-        console.log('Done...');
     } catch (error) {
-        console.error('Error during build process:', error);
-        publishLog(`error: ${error.message}`);
+        await publishLog('Error during build process', error);
+    } finally {
+        await producer.disconnect();
+        process.exit(0);
     }
-}
-
-init();
+})();

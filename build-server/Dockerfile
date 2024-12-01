@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy remaining files explicitly
-COPY ./entrypoint.sh ./server.js /home/app/
+COPY ./entrypoint.sh ./server.js ./kafka.pem /home/app/
 
 # Ensure scripts are executable
 RUN chmod +x /home/app/entrypoint.sh /home/app/server.js
