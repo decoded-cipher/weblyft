@@ -59,44 +59,6 @@ router.get('/', (req: Request, res: Response) => {
 
 
 /**
- * @route   GET /api/v1/projects/check/:name
- * @desc    Check the availability of a project name. If not available, return a suggestion
- * @access  Private
- * @params  name
- * @return  message, data
- * @error   400, { error }
- * @status  200, 400
- * 
- * @example /api/v1/projects/check/my-project
- **/
-
-router.get('/check', (req: Request, res: Response) => {
-    const { name } = req.body;
-
-    db.Project.findFirst({
-        where: {
-            name: name
-        }
-    }).then((project) => {
-        const name = generateSlug();
-
-        if (project) {
-            res.status(200).json({
-                message: 'Project name not available',
-                data: name
-            });
-        } else {
-            res.status(200).json({
-                message: 'Project name available',
-                data: name
-            });
-        }
-    });
-});
-
-
-
-/**
  * @route   POST /api/v1/project
  * @desc    Create a new project
  * @access  Private
@@ -111,7 +73,7 @@ router.get('/check', (req: Request, res: Response) => {
 router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response) => {
 
     const { gitUrl, projectName, cmd, envVars } = req.body;
-    const slug = projectName.toLowerCase().replace(/\s+/g, '-');
+    const slug = generateSlug();
 
     db.Project.create({
         data: {
@@ -126,6 +88,7 @@ router.post('/', async (req: Request<{}, {}, RunContainerRequest>, res: Response
                 message: 'Project created & deployment added to queue successfully',
                 data: {
                     project_id: project.id,
+                    slug: project.slug,
                     deployment_id: deployment.id
                 }
             });
