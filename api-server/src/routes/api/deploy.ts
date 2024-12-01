@@ -26,30 +26,17 @@ router.post('/', async (req: Request, res: Response) => {
 
     db.Project.findUnique({ where: { id: project_id } }).then(async (project) => {
 
-        db.Deployment.create({
-            data: {
-                projectId: project.id
-            }
-        }).then(async (deployment) => {
-
-            await triggerDeploy(project).then(() => {
-                res.status(200).json({
-                    message: 'Project deployment added to queue',
-                    data: {
-                        project: project,
-                        deployment: deployment
-                    }
-                });
-            }).catch((error) => {
-                res.status(400).json({
-                    error: 'Failed to add project deployment to queue',
-                    details: error
-                });
+        await triggerDeploy(project).then(() => {
+            res.status(200).json({
+                message: 'Project deployment added to queue',
+                data: {
+                    project: project,
+                    deployment: deployment
+                }
             });
-
         }).catch((error) => {
             res.status(400).json({
-                error: 'Failed to create deployment',
+                error: 'Failed to add project deployment to queue',
                 details: error
             });
         });
