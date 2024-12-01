@@ -1,5 +1,6 @@
 
 import { Container, ContainerCreateOptions } from "dockerode";
+import axios from "axios";
 import Docker from "dockerode";
 const docker = new Docker();
 
@@ -41,6 +42,8 @@ const pullDockerImage = (image: string): Promise<void> => {
 const createRunContainer = async (request: RunContainerRequest): Promise<void> => {
     const { projectId, deploymentId, gitUrl, cmd } = request;
     const webserviceImage = process.env.WEBSERVICE_IMAGE as string;
+    
+    await updateDeploymentStatus(deploymentId, "IN_PROGRESS");
 
     try {
         await pullDockerImage(webserviceImage);
@@ -83,11 +86,29 @@ const createRunContainer = async (request: RunContainerRequest): Promise<void> =
 
         await container.remove();
         console.log("--- Container removed successfully...");
+
+        await updateDeploymentStatus(deploymentId, "SUCCESS");
+
     } catch (err) {
+        await updateDeploymentStatus(deploymentId, "FAILED");
         console.error("Error:", err);
         throw err;
     }
 };
+
+
+
+const updateDeploymentStatus = async (deploymentId: string, status: string): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+    
+        const url = `${process.env.API_BASE_URL}/api/v1/deploy/${deploymentId}`;
+        const data = { status };
+
+        axios.patch(url, data)
+            .then(() => { resolve(); })
+            .catch((err) => { reject(err); });
+    });
+}
 
 
 

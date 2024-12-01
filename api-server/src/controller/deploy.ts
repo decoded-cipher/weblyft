@@ -35,7 +35,20 @@ module.exports = {
                 await sendToQueue('build_queue', {
                     ...queueData
                 }).then(() => {
-                    resolve(deployment);
+
+                    db.Project.update({
+                        where: {
+                            id: project.id
+                        },
+                        data: {
+                            currentDeploymentId: deployment.id
+                        }
+                    }).then(() => {
+                        resolve(deployment);
+                    }).catch((error) => {
+                        reject(error);
+                    });
+
                 }).catch((error) => {
                     reject(error);
                 });
