@@ -1,0 +1,87 @@
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url = env("DATABASE_URL")
+}
+
+
+// ----------------------------------- MODELS -----------------------------------
+
+
+model User {
+    id String @id @default(cuid())
+    email String @unique
+    password String
+    name String
+    avatar String ?
+    role Role @default(USER)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Project Project[]
+}
+
+model Project {
+    id String @id @default(cuid())
+    name String
+    description String ?
+    service Service @default(WEB)
+    slug String @unique
+    gitUrl String
+    customDomain String ?
+    cmd String ?
+    envSecrets Json ?
+    envFile String ?
+    buildCmd String ?
+    runCmd String ?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    currentDeploymentId String ? @map("current_deployment_id") // foreign key
+    Deployment Deployment[]
+    // user User @relation(fields: [userId], references: [id])
+    // userId String @map("user_id") // foreign key
+}
+
+model Deployment {
+    id String @id @default(cuid())
+    status DeploymentStatus @default(QUEUED)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    projectId String @map("project_id") // foreign key
+    project Project @relation(fields: [projectId], references: [id])
+}
+
+
+// ----------------------------------- ENUMS -----------------------------------
+
+
+enum Role {
+    USER
+    ADMIN
+}
+
+enum Service {
+    WEB
+    WORKER
+    CRON
+}
+
+enum DeploymentStatus {
+    QUEUED
+    IN_PROGRESS
+    SUCCESS
+    FAILED
+    CANCELLED
+}

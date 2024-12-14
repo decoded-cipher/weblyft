@@ -1,46 +1,117 @@
 
 import dotenv from 'dotenv';
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
+import asyncHandler from 'express-async-handler';
+import path from 'path';
+
 import { ClientRequest, IncomingMessage } from 'http';
 import httpProxy from 'http-proxy';
+import { PrismaClient } from '@prisma/client';
+
+import morgan from 'morgan';
+import compression from 'compression';
+import helmet from 'helmet';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
+const prisma = new PrismaClient();
 const proxy = httpProxy.createProxyServer();
 
-// Function to resolve target URL based on subdomain
-const resolveTarget = (hostname: string): string => {
+const cache: { [key: string]: { target: string, timestamp: number } } = {};
+const CACHE_DURATION = 5 * 60 * 1000;
+
+app.use(morgan('dev'));
+app.use(compression());
+app.use(helmet());
+
+app.use(cors());
+app.options('*', cors());
+
+
+// Custom error classes
+class NotFoundError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'NotFoundError';
+    }
+}
+
+class InternalServerError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'InternalServerError';
+    }
+}
+
+
+
+// Resolve target URL for the request
+const resolveTarget = async (hostname: string): Promise<string> => {
     const subdomain = hostname.split('.')[0];
-    return `${process.env.BASE_PATH}/${subdomain}`;
+    const currentTime = Date.now();
+
+    if (cache[subdomain] && (currentTime - cache[subdomain].timestamp < CACHE_DURATION)) {
+        return cache[subdomain].target;
+    }
+
+    const project = await prisma.project.findUnique({
+        where: { slug: subdomain },
+    });
+
+    if (!project) {
+        throw new NotFoundError('Project not found');
+    }
+
+    const target = `${process.env.BASE_PATH}/${project.id}/${project.currentDeploymentId}`;
+    cache[subdomain] = { target, timestamp: currentTime };
+
+    return target;
 };
 
+
+
 // Middleware to handle proxying
-app.use((req: Request, res: Response) => {
-    const target = resolveTarget(req.hostname);
+app.use(asyncHandler(async (req: Request, res: Response) => {
+    const target = await resolveTarget(req.hostname);
+    req.target = target;
+
     proxy.web(req, res, { target, changeOrigin: true }, (err) => {
         if (err) {
             console.error('Proxy error:', err);
-            res.status(500).send('Proxy error');
+            throw new InternalServerError('Proxy error');
         }
     });
-});
+}));
 
-// Modify proxy request path if needed
+
+
+// Proxy request handler
 proxy.on('proxyReq', (proxyReq: ClientRequest, req: IncomingMessage) => {
-    const host = req.headers.host;
-    if (host) {
-        const target = resolveTarget(host);
-        if (!req.url?.includes('.')) {
-            proxyReq.path = `${target}/index.html`;
-        }
-    } else {
-        console.error('Host header is missing');
+    const target = req.target;
+    if (target && !req.url?.includes('.')) {
+        proxyReq.path = `${target}/index.html`;
     }
 });
 
+
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof NotFoundError) {
+        res.status(404).sendFile(path.join(__dirname, 'errors', '404.html'));
+    } else if (err instanceof InternalServerError) {
+        res.status(500).sendFile(path.join(__dirname, 'errors', '500.html'));
+    } else {
+        res.status(500).sendFile(path.join(__dirname, 'errors', '500.html'));
+    }
+});
+
+
+
 // Start the server
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`--- Reverse Proxy listening on port ${port}`);
 });

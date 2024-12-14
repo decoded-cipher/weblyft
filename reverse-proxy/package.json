@@ -11,15 +11,27 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "http-proxy": "^1.18.1"
+    "@neondatabase/serverless": "^0.10.4",
+    "@prisma/adapter-neon": "^6.0.0",
+    "@prisma/client": "^6.0.1",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-async-handler": "^1.2.0",
+    "helmet": "^8.0.0",
+    "http-proxy": "^1.18.1",
+    "morgan": "^1.10.0",
+    "request": "^2.88.2",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/http-proxy": "^1.17.15",
     "@types/node": "^22.7.2",
+    "@types/ws": "^8.5.13",
     "nodemon": "^3.1.7",
+    "prisma": "^6.0.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.2"

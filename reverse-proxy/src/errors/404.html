@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+                colors: {
+                    primary: {
+                        600: '#2563EB',
+                        500: '#3B82F6',
+                        800: '#1D4ED8',
+                        300: '#93C5FD',
+                        900: '#1E40AF'
+                    },
+                    gray: {
+                        900: '#111827'
+                    }
+                }
+            }
+          }
+        }
+    </script>
+
+</head>
+<body>
+
+    <section class="bg-white dark:bg-gray-900 w-full h-screen flex items-center justify-center">
+        <div class="mx-auto max-w-screen-xl">
+            <div class="mx-auto max-w-screen-lg text-center">
+                <h1 class="mb-4 text-7xl tracking-tight font-extrabold lg:text-9xl text-primary-600 dark:text-primary-500">404</h1>
+                <p class="mb-4 text-3xl tracking-tight font-bold text-gray-900 md:text-4xl dark:text-white">Something's missing.</p>
+                <p class="mb-4 text-lg font-light text-gray-500 dark:text-gray-400">
+                    Sorry, we can't find the page you're looking for. It might have been removed, had its name changed, or is temporarily unavailable. 
+                    Please check the URL for any typos or use the navigation menu to find what you're looking for.
+                </p>
+            </div>   
+        </div>
+    </section>
+    
+</body>
+</html>
