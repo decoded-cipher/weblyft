@@ -1,22 +1,23 @@
 
 import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
 import path from 'path';
 
 import { ClientRequest, IncomingMessage } from 'http';
 import httpProxy from 'http-proxy';
-import { PrismaClient } from '@prisma/client';
 
 import morgan from 'morgan';
 import compression from 'compression';
 import helmet from 'helmet';
 import cors from 'cors';
 
-dotenv.config();
+import db from './config/db';
+
 
 const app = express();
-const prisma = new PrismaClient();
 const proxy = httpProxy.createProxyServer();
 
 const cache: { [key: string]: { target: string, timestamp: number } } = {};
@@ -47,6 +48,21 @@ class InternalServerError extends Error {
 
 
 
+// Extend interfaces to add custom properties
+declare module 'express-serve-static-core' {
+    interface Request {
+      target?: string;
+    }
+}
+
+declare module 'http' {
+    interface IncomingMessage {
+      target?: string;
+    }
+}
+
+
+
 // Resolve target URL for the request
 const resolveTarget = async (hostname: string): Promise<string> => {
     const subdomain = hostname.split('.')[0];
@@ -56,9 +72,12 @@ const resolveTarget = async (hostname: string): Promise<string> => {
         return cache[subdomain].target;
     }
 
-    const project = await prisma.project.findUnique({
-        where: { slug: subdomain },
-    });
+    const project = await db('Project')
+        .select('id', 'current_deployment_id as currentDeploymentId')
+        .where({ slug : subdomain })
+        .first();
+
+    console.log('Project:', project);
 
     if (!project) {
         throw new NotFoundError('Project not found');

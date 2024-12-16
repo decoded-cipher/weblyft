@@ -1,18 +1,17 @@
+import dotenv from "dotenv";
+import knex from "knex";
 
-import ws from 'ws';
+dotenv.config();
 
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { PrismaNeon } from '@prisma/adapter-neon';
-import { PrismaClient } from '@prisma/client';
-
-neonConfig.webSocketConstructor = ws;
-
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaNeon(pool);
-
-const prisma = new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'],
-    errorFormat: 'pretty'
+const db = knex({
+    client: "pg",
+    connection: {
+        host: process.env.DATABASE_HOST,
+        user: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PASSWORD,
+        database: process.env.DATABASE_NAME,
+    ssl: { rejectUnauthorized: false },
+    },
 });
 
-export const db = prisma;
+export default db;
