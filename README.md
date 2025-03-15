@@ -6,10 +6,7 @@
 
 🚧 **Weblyft is a work in progress.** Parts — or even the entire platform — **may not function correctly** at this stage. Expect bugs, unfinished features, and potential breaking changes. **Use at your own risk!** Contributions and feedback are welcome! 🛠️🚀
 
-
 ---
----
-
 
 Weblyft is an open-source **Platform as a Service (PaaS) platform** that simplifies the deployment and management of applications. It offers a range of features to streamline the development process and provide a seamless experience for developers. Weblyft is built on a **Microservices Architecture** that leverages the best tools and services available. It is a **proof of concept** and should not be used in production environments. It is intended for educational purposes only.
 
