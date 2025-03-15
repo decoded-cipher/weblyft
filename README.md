@@ -1,6 +1,20 @@
 # 🚀 Weblyft - An Open-Source Container-Based PaaS Platform
 
 
+### ⚠️ ⚠️ **WARNING: UNDER ACTIVE DEVELOPMENT !** ⚠️ ⚠️
+
+
+🚧 **Weblyft is a work in progress.** Parts — or even the entire platform — **may not function correctly** at this stage. Expect bugs, unfinished features, and potential breaking changes. **Use at your own risk!** Contributions and feedback are welcome! 🛠️🚀
+
+
+---
+---
+
+
+Weblyft is an open-source **Platform as a Service (PaaS) platform** that simplifies the deployment and management of applications. It offers a range of features to streamline the development process and provide a seamless experience for developers. Weblyft is built on a **Microservices Architecture** that leverages the best tools and services available. It is a **proof of concept** and should not be used in production environments. It is intended for educational purposes only.
+
+
+
 ![GitHub license](https://img.shields.io/github/license/decoded-cipher/weblyft?style=for-the-badge)
 ![Contributions welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=for-the-badge&logo=github)
 ![GitHub last commit](https://img.shields.io/github/last-commit/decoded-cipher/weblyft?style=for-the-badge)
@@ -8,10 +22,6 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/decoded-cipher/weblyft?style=for-the-badge)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/decoded-cipher/weblyft?style=for-the-badge)
 ![GitHub repo size](https://img.shields.io/github/repo-size/decoded-cipher/weblyft?style=for-the-badge)
-
-
-
-Weblyft is an open-source **Platform as a Service (PaaS) platform** that simplifies the deployment and management of applications. It offers a range of features to streamline the development process and provide a seamless experience for developers. Weblyft is built on a **Microservices Architecture** that leverages the best tools and services available. It is a **proof of concept** and should not be used in production environments. It is intended for educational purposes only.
 
 
 
