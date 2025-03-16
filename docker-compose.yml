@@ -122,3 +122,4 @@ volumes:
   clickhouse-data:
   postgres_data:
       driver: local
+      
