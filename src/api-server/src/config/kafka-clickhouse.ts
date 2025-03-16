@@ -18,15 +18,6 @@ const clickhouseClient = createClient({
 const kafka = new Kafka({
     clientId: 'api-server',
     brokers: [process.env.KAFKA_BROKERS],
-    ssl: {
-        rejectUnauthorized: true,
-        ca: fs.readFileSync(path.join(__dirname, 'kafka.pem'), 'utf-8'),
-    },
-    sasl: {
-        mechanism: 'plain',
-        username: process.env.KAFKA_USERNAME,
-        password: process.env.KAFKA_PASSWORD,
-    }
 });
 
 // Create a Kafka consumer

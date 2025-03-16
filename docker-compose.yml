@@ -21,12 +21,64 @@ services:
     networks:
       - weblyft
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - 2181:2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - weblyft
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - weblyft
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - 8123:8123
+      - 9009:9009
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    networks:
+      - weblyft
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: weblyft_user
+      POSTGRES_PASSWORD: weblyft_password
+      POSTGRES_DB: weblyft
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - weblyft
+      
   # api-server:
   #   build: ./api-server
   #   container_name: api-server
   #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
+  #     - kafka
+  #     - clickhouse
   #   ports:
   #     - 5000:5000
   #   volumes:
@@ -34,7 +86,7 @@ services:
   #   networks:
   #     - weblyft
   #   env_file:
-  #     - ./api-server/.env
+  #     - ./src/api-server/.env
 
   # docker-mgr:
   #   build: ./docker-mgr
@@ -46,7 +98,7 @@ services:
   #   networks:
   #     - weblyft
   #   env_file:
-  #     - ./docker-mgr/.env
+  #     - ./src/docker-mgr/.env
 
   # reverse-proxy:
   #   build: ./reverse-proxy
@@ -58,7 +110,7 @@ services:
   #   networks:
   #     - weblyft
   #   env_file:
-  #     - ./reverse-proxy/.env
+  #     - ./src/reverse-proxy/.env
 
 networks:
   weblyft:
@@ -67,3 +119,6 @@ networks:
 volumes:
   # public:
   rabbitmq-data:
+  clickhouse-data:
+  postgres_data:
+      driver: local
