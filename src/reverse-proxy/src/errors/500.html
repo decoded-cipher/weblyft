@@ -3,44 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-          theme: {
-            extend: {
-                colors: {
-                    primary: {
-                        600: '#2563EB',
-                        500: '#3B82F6',
-                        800: '#1D4ED8',
-                        300: '#93C5FD',
-                        900: '#1E40AF'
-                    },
-                    gray: {
-                        900: '#111827'
-                    }
-                }
-            }
-          }
+    <title>500 Internal Server Error</title>
+    <style>
+        :root {
+            --primary-600: #2563EB;
+            --primary-500: #3B82F6;
+            --primary-800: #1D4ED8;
+            --primary-300: #93C5FD;
+            --primary-900: #1E40AF;
+            --gray-900: #111827;
+            --gray-500: #6B7280;
+            --gray-400: #9CA3AF;
+            --white: #fff;
         }
-    </script>
-
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: var(--white);
+            color: var(--gray-900);
+            width: 100vw;
+            height: 100vh;
+            min-height: 100vh;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        }
+        .center-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--white);
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        .text-center {
+            text-align: center;
+            max-width: 1024px;
+            margin: 0 auto;
+        }
+        .error-code {
+            margin-bottom: 1rem;
+            font-size: 4.5rem;
+            letter-spacing: -0.05em;
+            font-weight: 800;
+            color: var(--primary-600);
+        }
+        @media (min-width: 1024px) {
+            .error-code {
+                font-size: 9rem;
+            }
+        }
+        .error-title {
+            margin-bottom: 1rem;
+            font-size: 1.875rem;
+            letter-spacing: -0.02em;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        @media (min-width: 768px) {
+            .error-title {
+                font-size: 2.25rem;
+            }
+        }
+        .error-message {
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+            font-weight: 300;
+            color: var(--gray-500);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body, .center-section {
+                background-color: var(--gray-900);
+                color: var(--white);
+            }
+            .error-code {
+                color: var(--primary-500);
+            }
+            .error-title {
+                color: var(--white);
+            }
+            .error-message {
+                color: var(--gray-400);
+            }
+        }
+    </style>
 </head>
 <body>
-
-    <section class="bg-white dark:bg-gray-900 w-full h-screen flex items-center justify-center">
-        <div class="mx-auto max-w-screen-xl">
-            <div class="mx-auto max-w-screen-lg text-center">
-                <h1 class="mb-4 text-7xl tracking-tight font-extrabold lg:text-9xl text-primary-600 dark:text-primary-500">500</h1>
-                <p class="mb-4 text-3xl tracking-tight font-bold text-gray-900 md:text-4xl dark:text-white">Internal Server Error.</p>
-                <p class="mb-4 text-lg font-light text-gray-500 dark:text-gray-400">
+    <section class="center-section">
+        <div class="container">
+            <div class="text-center">
+                <h1 class="error-code">500</h1>
+                <p class="error-title">Internal Server Error.</p>
+                <p class="error-message">
                     We are already working to solve the problem. Please try again later or contact us if the problem persists.
                 </p>
             </div>   
         </div>
     </section>
-    
 </body>
 </html>

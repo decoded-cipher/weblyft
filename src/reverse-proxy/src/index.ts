@@ -14,7 +14,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 import cors from 'cors';
 
-import db from './config/db';
+const { Client } = require('pg');
 
 
 const app = express();
@@ -29,6 +29,22 @@ app.use(helmet());
 
 app.use(cors());
 app.options('*', cors());
+
+
+// Database connection
+const db = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false,
+    }
+});
+
+db.connect()
+    .then(() => console.log('--- Connected to the database'))
+    .catch(err => {
+        console.error('--- Database connection error:', err);
+        process.exit(1);
+    });
 
 
 // Custom error classes
@@ -72,10 +88,11 @@ const resolveTarget = async (hostname: string): Promise<string> => {
         return cache[subdomain].target;
     }
 
-    const project = await db('Project')
-        .select('id', 'current_deployment_id as currentDeploymentId')
-        .where({ slug : subdomain })
-        .first();
+    const result = await db.query(
+        `SELECT id, current_deployment_id as "currentDeploymentId" FROM "Project" WHERE slug = $1 LIMIT 1`,
+        [subdomain]
+    );
+    const project = result.rows[0];
 
     console.log('Project:', project);
 
