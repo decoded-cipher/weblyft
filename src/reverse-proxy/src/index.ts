@@ -41,7 +41,7 @@ const db = new Client({
 
 db.connect()
     .then(() => console.log('--- Connected to the database'))
-    .catch(err => {
+    .catch((err: Error) => {
         console.error('--- Database connection error:', err);
         process.exit(1);
     });
