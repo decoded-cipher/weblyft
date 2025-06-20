@@ -108,10 +108,26 @@ const resolveTarget = async (hostname: string): Promise<string> => {
 
 
 
+const checkStorageExists = async (target: string): Promise<boolean> => {
+    try {
+        const res = await fetch(`${target}/index.html`, { method: 'HEAD' });
+        return res.ok;
+    } catch (err) {
+        return false;
+    }
+};
+
+
+
 // Middleware to handle proxying
 app.use(asyncHandler(async (req: Request, res: Response) => {
     const target = await resolveTarget(req.hostname);
     req.target = target;
+
+    const exists = await checkStorageExists(target);
+    if (!exists) {
+        return res.status(200).sendFile(path.join(__dirname, 'errors', '202.html'));
+    }
 
     proxy.web(req, res, { target, changeOrigin: true }, (err) => {
         if (err) {
