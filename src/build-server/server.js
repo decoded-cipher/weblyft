@@ -26,8 +26,7 @@ const s3Client = new S3Client({
 const kafka = new Kafka({
     clientId: `build-server-${process.env.DEPLOYMENT_ID}`,
     brokers: [process.env.KAFKA_BROKERS],
-    connectionTimeout: 30000,   // 30 seconds
-    requestTimeout: 30000,      // 30 seconds
+    ssl: false
 });
 
 // Initialize Kafka producer
@@ -131,7 +130,10 @@ async function uploadDistFolder(distFolderPath) {
 (async () => {
     try {
 
-        await producer.connect();
+        await producer.connect().then(() => {
+            console.log('Kafka producer connected successfully.');
+        });
+
         await publishLog('Build process started...');
 
         const outDirPath = path.join(__dirname, 'output');
