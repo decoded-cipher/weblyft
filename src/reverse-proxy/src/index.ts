@@ -14,14 +14,19 @@ import compression from 'compression';
 import helmet from 'helmet';
 import cors from 'cors';
 
+import Redis from 'ioredis';
 const { Client } = require('pg');
 
 
 const app = express();
 const proxy = httpProxy.createProxyServer();
 
-const cache: { [key: string]: { target: string, timestamp: number } } = {};
-const CACHE_DURATION = 5 * 60 * 1000;
+const redis = new Redis({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT
+});
+
+const CACHE_DURATION_SECONDS = 5 * 60;
 
 app.use(morgan('dev'));
 app.use(compression());
@@ -31,12 +36,21 @@ app.use(cors());
 app.options('*', cors());
 
 
+// Redis connection
+redis.on('connect', () => {
+    console.log('--- Connected to Redis');
+});
+
+redis.on('error', (err: Error) => {
+    console.error('--- Redis connection error:', err);
+    process.exit(1);
+});
+
+
 // Database connection
 const db = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false,
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 db.connect()
@@ -79,13 +93,14 @@ declare module 'http' {
 
 
 
-// Resolve target URL for the request
+// Resolve target URL with Redis cache
 const resolveTarget = async (hostname: string): Promise<string> => {
     const subdomain = hostname.split('.')[0];
-    const currentTime = Date.now();
+    const cacheKey = `target:${subdomain}`;
 
-    if (cache[subdomain] && (currentTime - cache[subdomain].timestamp < CACHE_DURATION)) {
-        return cache[subdomain].target;
+    const cachedTarget = await redis.get(cacheKey);
+    if (cachedTarget) {
+        return cachedTarget;
     }
 
     const result = await db.query(
@@ -93,26 +108,35 @@ const resolveTarget = async (hostname: string): Promise<string> => {
         [subdomain]
     );
     const project = result.rows[0];
-
-    console.log('Project:', project);
-
     if (!project) {
         throw new NotFoundError('Project not found');
     }
 
     const target = `${process.env.BASE_PATH}/${project.id}/${project.currentDeploymentId}`;
-    cache[subdomain] = { target, timestamp: currentTime };
+    await redis.set(cacheKey, target, 'EX', CACHE_DURATION_SECONDS);
 
     return target;
 };
 
 
 
+// Check storage exists with Redis cache
 const checkStorageExists = async (target: string): Promise<boolean> => {
+    const cacheKey = `storage:${target}`;
+    
+    const cachedResult = await redis.get(cacheKey);
+    if (cachedResult !== null) {
+        return cachedResult === 'true';
+    }
+
     try {
         const res = await fetch(`${target}/index.html`, { method: 'HEAD' });
-        return res.ok;
+        const exists = res.ok;
+        
+        await redis.set(cacheKey, exists.toString(), 'EX', CACHE_DURATION_SECONDS);
+        return exists;
     } catch (err) {
+        await redis.set(cacheKey, 'false', 'EX', CACHE_DURATION_SECONDS);
         return false;
     }
 };
@@ -130,10 +154,8 @@ app.use(asyncHandler(async (req: Request, res: Response) => {
     }
 
     proxy.web(req, res, { target, changeOrigin: true }, (err) => {
-        if (err) {
-            console.error('Proxy error:', err);
-            throw new InternalServerError('Proxy error');
-        }
+        console.error('Proxy error:', err);
+        throw new InternalServerError('Proxy error');
     });
 }));
 
@@ -153,8 +175,6 @@ proxy.on('proxyReq', (proxyReq: ClientRequest, req: IncomingMessage) => {
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if (err instanceof NotFoundError) {
         res.status(404).sendFile(path.join(__dirname, 'errors', '404.html'));
-    } else if (err instanceof InternalServerError) {
-        res.status(500).sendFile(path.join(__dirname, 'errors', '500.html'));
     } else {
         res.status(500).sendFile(path.join(__dirname, 'errors', '500.html'));
     }
