@@ -3,14 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { Kafka } from 'kafkajs';
-import { createClient } from '@clickhouse/client';
-
-
-
-// Create a ClickHouse client
-const clickhouseClient = createClient({
-    url: process.env.CLICKHOUSE_URL
-});
 
 
 
@@ -30,22 +22,22 @@ const processMessage = async (message: any) => {
     const { project_id, deployment_id, log } = JSON.parse(message.value.toString());
     console.log(`--- PROJECT_ID: ${project_id}, DEPLOYMENT_ID: ${deployment_id}, LOG: ${log}`);
 
-    try {
-        const { query_id } = await clickhouseClient.insert({
-            table: 'log_events',
-            values: [{
-                event_id: uuidv4(),
-                project_id: project_id,
-                deployment_id: deployment_id,
-                log: log
-            }],
-            format: 'JSONEachRow'
-        });
+    // try {
+    //     const { query_id } = await clickhouseClient.insert({
+    //         table: 'log_events',
+    //         values: [{
+    //             event_id: uuidv4(),
+    //             project_id: project_id,
+    //             deployment_id: deployment_id,
+    //             log: log
+    //         }],
+    //         format: 'JSONEachRow'
+    //     });
 
-        console.log(`--- Inserted log event with query_id: ${query_id}`);
-    } catch (error) {
-        console.error('--- Error inserting log event:', error);
-    }
+    //     console.log(`--- Inserted log event with query_id: ${query_id}`);
+    // } catch (error) {
+    //     console.error('--- Error inserting log event:', error);
+    // }
 };
 
 
